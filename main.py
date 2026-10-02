@@ -28,7 +28,7 @@ print(nilotinib.sort_values("block").tail()) # largest block values
 
 print(nilotinib.groupby(["channel", "Conc"]).size()) # groups data by channe and concentration
 
-# WEEK 2
+# WEEKS 2 & 3
 
 channels = nilotinib["channel"].unique()
 result = plt.subplots(2, 4, figsize=(14, 7)) # all 7 plots on one screen
@@ -39,7 +39,10 @@ axes = axes.flatten()
 for i, channel in enumerate(channels):
     channel_data = nilotinib[nilotinib["channel"] == channel]
 
+    summary = channel_data.groupby("Conc")["block"].agg(["mean", "std"]).reset_index()
+
     axes[i].scatter(channel_data["Conc"], channel_data["block"])
+    axes[i].errorbar(summary["Conc"], summary["mean"], yerr=summary["std"], marker="o", capsize=4)
     axes[i].set_xscale("log")
     axes[i].set_title(channel)
     axes[i].set_xlabel("Nilotinib concentration (nM)")
@@ -49,3 +52,4 @@ axes[-1].axis("off")
 
 plt.tight_layout()
 plt.show()
+
