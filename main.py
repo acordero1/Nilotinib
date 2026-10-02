@@ -1,4 +1,7 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+
+# WEEK 1
 
 EXPECTED_ROWS = 2610 # research project explanatory PDF
 EXPECTED_NILOTINIB = 85 # research project explanatory PDF
@@ -24,3 +27,25 @@ print(nilotinib.sort_values("block").head()) # smallest block values
 print(nilotinib.sort_values("block").tail()) # largest block values
 
 print(nilotinib.groupby(["channel", "Conc"]).size()) # groups data by channe and concentration
+
+# WEEK 2
+
+channels = nilotinib["channel"].unique()
+result = plt.subplots(2, 4, figsize=(14, 7)) # all 7 plots on one screen
+fig = result[0]
+axes = result[1]
+axes = axes.flatten()
+
+for i, channel in enumerate(channels):
+    channel_data = nilotinib[nilotinib["channel"] == channel]
+
+    axes[i].scatter(channel_data["Conc"], channel_data["block"])
+    axes[i].set_xscale("log")
+    axes[i].set_title(channel)
+    axes[i].set_xlabel("Nilotinib concentration (nM)")
+    axes[i].set_ylabel("Block (%)")
+
+axes[-1].axis("off")
+
+plt.tight_layout()
+plt.show()
