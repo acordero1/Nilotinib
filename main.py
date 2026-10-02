@@ -53,3 +53,6 @@ axes[-1].axis("off")
 plt.tight_layout()
 plt.show()
 
+### IK1 is basically flat until the greatest concentration. Thus, the concentration range did not get high enough to its IC50 value.
+### Concentrations Calcium, IKs, Peak sodium, Kv4.3 yield higher block percentages than IK1, though not enough to see their IC50 values.
+### Late sodium and especially hERG concentrations were high enough to identify their IC50 values.
