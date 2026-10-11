@@ -63,6 +63,8 @@ plt.show()
 
 # WEEK 4
 
+ic50_results = {}
+
 def hill_model(c, ic50):
     h = 1
     return (c ** h) / ((ic50 ** h) + (c ** h))
@@ -70,7 +72,8 @@ def hill_model(c, ic50):
 herg = nilotinib[nilotinib["channel"] == "hERG"]
 c_hERG = herg["Conc"]
 b_hERG = herg["block"] / 100
-ic50_hERG = curve_fit(hill_model, c_hERG, b_hERG, bounds=(0, float("inf")))[0][0]
+ic50_hERG = curve_fit(hill_model, c_hERG, b_hERG, bounds=(0, float("inf")))[0][0] # bounds ensure model never searches for a ic50 value that is physically impossible
+ic50_results[channel] = ic50_hERG
 print(f"hERG IC50: {ic50_hERG} nM")
 
 x_fit = np.logspace(np.log10(c_hERG).min(), np.log10(c_hERG).max(), 200)
@@ -87,4 +90,27 @@ plt.show()
 
 predicted_hERG = hill_model(c_hERG, ic50_hERG)
 residuals_hERG = b_hERG - predicted_hERG
-print(residuals_hERG)
+
+for channel in channels:
+    data = nilotinib[nilotinib["channel"] == channel]
+
+    c = data["Conc"]
+    b = data["block"] / 100
+
+    ic50 = curve_fit(hill_model, c, b, bounds=(0, float("inf")))[0][0]
+    predicted = hill_model(c, ic50)
+    residuals = b - predicted
+
+    avg_block = data.groupby("Conc")["block"].mean() / 100
+    if avg_block.max() >= 0.5: # so we can, with some accuracy, identify ic50
+        flag = "identified"
+    else:
+        flag = "extrapolated"
+
+    ic50_results[channel] = {"IC50":ic50, "Fit Flag":flag}
+    print(f"{channel} IC50: {ic50} nM")
+
+print(ic50_results)
+# highest exp concentration was only 6000 nM, but some of these results are extreme extrapolations, so likely not accurate
+# hill equation is bounded between 0 and 1; bounds on ic50 parameter ensure this value is always positive
+# monotonically increasing since derivaive is positive at all points
