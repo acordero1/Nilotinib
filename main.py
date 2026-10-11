@@ -69,12 +69,27 @@ def hill_model(c, ic50):
     h = 1
     return (c ** h) / ((ic50 ** h) + (c ** h))
 
+def hill_model_free(c, ic50, h):
+    return (c ** h) / ((ic50 ** h) + (c ** h))
+
 herg = nilotinib[nilotinib["channel"] == "hERG"]
 c_hERG = herg["Conc"]
 b_hERG = herg["block"] / 100
 ic50_hERG = curve_fit(hill_model, c_hERG, b_hERG, bounds=(0, float("inf")))[0][0] # bounds ensure model never searches for a ic50 value that is physically impossible
-ic50_results[channel] = ic50_hERG
+
+avg_block = herg.groupby("Conc")["block"].mean() / 100
+if avg_block.max() >= 0.5: # so we can, with some accuracy, identify ic50
+    flag_hERG = "identified"
+else:
+    flag_hERG = "extrapolated"
+
+# ic50_results["hERG"] = {"IC50":ic50_hERG, "Fit Flag":flag_hERG}
+ic50_free_hERG = curve_fit(hill_model_free, c_hERG, b_hERG, p0=[ic50_hERG, 1], bounds=(0, float("inf")))[0][0]
+h_free_hERG = curve_fit(hill_model_free, c_hERG, b_hERG, p0=[ic50_hERG, 1], bounds=(0, float("inf")))[0][1]
+
 print(f"hERG IC50: {ic50_hERG} nM")
+print(f"hERG IC50 (free h): {ic50_free_hERG} nM")
+print(f"hERG free h: {h_free_hERG}")
 
 x_fit = np.logspace(np.log10(c_hERG).min(), np.log10(c_hERG).max(), 200)
 y_fit = hill_model(x_fit, ic50_hERG) * 100
@@ -101,14 +116,19 @@ for channel in channels:
     predicted = hill_model(c, ic50)
     residuals = b - predicted
 
+    ic50_free = curve_fit(hill_model_free, c, b, p0=[ic50, 1], bounds=(0, float("inf")))[0][0]
+    h_free = curve_fit(hill_model_free, c, b, p0=[ic50, 1], bounds=(0, float("inf")))[0][1]
+
     avg_block = data.groupby("Conc")["block"].mean() / 100
     if avg_block.max() >= 0.5: # so we can, with some accuracy, identify ic50
         flag = "identified"
     else:
         flag = "extrapolated"
 
-    ic50_results[channel] = {"IC50":ic50, "Fit Flag":flag}
-    print(f"{channel} IC50: {ic50} nM")
+    ic50_results[channel] = {"IC50":ic50, "IC50 Free h":ic50_free, "Free h":h_free, "Fit Flag":flag}
+    print(f"{channel} IC50 (fixed): {ic50} nM")
+    print(f"{channel} IC50 (free h): {ic50_free} nM")
+    print(f"{channel} free h: {h_free}")
 
 print(ic50_results)
 # highest exp concentration was only 6000 nM, but some of these results are extreme extrapolations, so likely not accurate
