@@ -1,6 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
+
+import numpy as np
+
 # WEEK 1
 
 EXPECTED_ROWS = 2610 # research project explanatory PDF
@@ -56,3 +60,31 @@ plt.show()
 ### IK1 is basically flat until the greatest concentration. Thus, the concentration range did not get high enough to its IC50 value.
 ### Concentrations Calcium, IKs, Peak sodium, Kv4.3 yield higher block percentages than IK1, though not enough to see their IC50 values.
 ### Late sodium and especially hERG concentrations were high enough to identify their IC50 values.
+
+# WEEK 4
+
+def hill_model(c, ic50):
+    h = 1
+    return (c ** h) / ((ic50 ** h) + (c ** h))
+
+herg = nilotinib[nilotinib["channel"] == "hERG"]
+c_hERG = herg["Conc"]
+b_hERG = herg["block"] / 100
+ic50_hERG = curve_fit(hill_model, c_hERG, b_hERG, bounds=(0, float("inf")))[0][0]
+print(f"hERG IC50: {ic50_hERG} nM")
+
+x_fit = np.logspace(np.log10(c_hERG).min(), np.log10(c_hERG).max(), 200)
+y_fit = hill_model(x_fit, ic50_hERG) * 100
+plt.scatter(c_hERG, b_hERG * 100, label="Raw data")
+plt.plot(x_fit, y_fit, label="Hill model fit")
+plt.scatter(ic50_hERG, 50, label="IC50")
+plt.xscale("log")
+plt.xlabel("Nilotinib concentration (nM)")
+plt.ylabel("Block (%)")
+plt.title("hERG")
+plt.legend()
+plt.show()
+
+predicted_hERG = hill_model(c_hERG, ic50_hERG)
+residuals_hERG = b_hERG - predicted_hERG
+print(residuals_hERG)
