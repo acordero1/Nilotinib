@@ -134,3 +134,5 @@ print(ic50_results)
 # highest exp concentration was only 6000 nM, but some of these results are extreme extrapolations, so likely not accurate
 # hill equation is bounded between 0 and 1; bounds on ic50 parameter ensure this value is always positive
 # monotonically increasing since derivaive is positive at all points
+
+# fixed h and free h fits gave similar ic50 estimates for hERG and late sodium (the latter of which to a lesser degree of similarity). The rest of them changed substantially with freed Hill slopes, which makes sense since they were largely extrapolated (not interpolated) for ic50 values
