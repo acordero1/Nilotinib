@@ -67,10 +67,10 @@ ic50_results = {}
 
 def hill_model(c, ic50):
     h = 1
-    return (c ** h) / ((ic50 ** h) + (c ** h))
+    return (c ** h) / ((ic50 ** h) + (c ** h)) # hill coefficient = h
 
 def hill_model_free(c, ic50, h):
-    return (c ** h) / ((ic50 ** h) + (c ** h))
+    return (c ** h) / ((ic50 ** h) + (c ** h)) # hill coefficient = h
 
 herg = nilotinib[nilotinib["channel"] == "hERG"]
 c_hERG = herg["Conc"]
@@ -131,8 +131,79 @@ for channel in channels:
     print(f"{channel} free h: {h_free}")
 
 print(ic50_results)
+
+# WEEK 5
+# herg_fit = ic50_results["hERG"]
+# parameters = {
+#     "channel" : "hERG",
+#     "current" : "IKr",
+#     "ic50" : herg_fit["IC50"],
+#     "h" : 1,
+#     "flag" : "Fit Flag"
+# }
+
+parameters = []
+
+current_map = {
+    "hERG": "IKr",
+    "Calcium": "ICaL",
+    "Peak sodium": "INa",
+    "Late sodium": "INaL",
+    "IKs": "IKs",
+    "IK1": "IK1",
+    "Kv4.3": "Ito",
+}
+
+for channel, current in current_map.items():
+    fit = ic50_results[channel]
+    parameters.append({
+        "channel": channel,
+        "current": current,
+        "ic50": fit["IC50"],
+        "h": 1,
+        "flag": fit["Fit Flag"],
+    })
+
+parameter_table = pd.DataFrame(parameters)
+print(parameter_table.to_string(index=False))
+
+print(parameters)
+
+parameter_table.to_csv("data/processed/nilotinib_parameters_v1.csv",index=False)
+
+# check all blocks
+
+doses = [0, 0.5 * FREE_CMAX, 60, 300, 1800, 6000]
+
+prediction_rows = []
+for parameter in parameters:
+    for dose in doses:
+        block = hill_model(dose, parameter["ic50"])
+        prediction_rows.append({
+            "current": parameter["current"],
+            "concentration": dose,
+            "block": block,
+            "remaining": 1 - block
+        })
+
+predictions = pd.DataFrame(prediction_rows)
+print(predictions.to_string(index=False))
+
+for b in predictions["block"]:
+    if not (0 <= b <= 1):
+        raise ValueError(f"Block prediction out of range: {b}")
+
+print("all block predictions are between 0 and 1")
+predictions.to_csv("data/processed/nilotinib_predicted_block_v1.csv", index=False)
+
+
 # highest exp concentration was only 6000 nM, but some of these results are extreme extrapolations, so likely not accurate
 # hill equation is bounded between 0 and 1; bounds on ic50 parameter ensure this value is always positive
 # monotonically increasing since derivaive is positive at all points
 
 # fixed h and free h fits gave similar ic50 estimates for hERG and late sodium (the latter of which to a lesser degree of similarity). The rest of them changed substantially with freed Hill slopes, which makes sense since they were largely extrapolated (not interpolated) for ic50 values
+
+# MEETING NOTES
+# test your code with known value from the experiment to make sure your code is right
+# compute error function by using local minimum of error function. quantify error!!!!! compare with other functions or something
+# 2-3 slides

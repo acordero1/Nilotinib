@@ -1,0 +1,8 @@
+channel,current,ic50,h,flag
+hERG,IKr,94.87096237374082,1,identified
+Calcium,ICaL,53240.241972393815,1,extrapolated
+Peak sodium,INa,80504.7218181145,1,extrapolated
+Late sodium,INaL,5411.01547255835,1,identified
+IKs,IKs,61392.829257104975,1,extrapolated
+IK1,IK1,253952.0,1,extrapolated
+Kv4.3,Ito,80123.24968023693,1,extrapolated
